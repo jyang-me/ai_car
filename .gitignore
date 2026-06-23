@@ -1,0 +1,16 @@
+# Windows accidental device file
+nul
+
+# Local build/download logs generated while debugging
+f103_test/MDK-ARM/build_from_codex.log
+f103_test/MDK-ARM/flash_from_codex.log
+
+# Untracked Keil intermediates for newly added modules.
+# Existing tracked build outputs are intentionally left tracked.
+f103_test/MDK-ARM/f103c8t6_test/*.crf
+f103_test/MDK-ARM/f103c8t6_test/*.d
+f103_test/MDK-ARM/f103c8t6_test/*.o
+
+# xiaozhi-esp32 is a separate upstream Git repository.
+# Local AI-car changes are archived in docs/esp32-xiaozhi-ai-car.patch.
+xiaozhi-esp32/

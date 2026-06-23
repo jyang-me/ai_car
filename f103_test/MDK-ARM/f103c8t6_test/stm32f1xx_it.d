@@ -36,3 +36,4 @@ f103c8t6_test\stm32f1xx_it.o: ../HARDWARE/ENCODER/encoder.h
 f103c8t6_test\stm32f1xx_it.o: ../HARDWARE/JY61P/jy61p.h
 f103c8t6_test\stm32f1xx_it.o: ../HARDWARE/PROTOCOL/protocol.h
 f103c8t6_test\stm32f1xx_it.o: ../Core/Inc/usart.h
+f103c8t6_test\stm32f1xx_it.o: ../HARDWARE/BT_REMOTE/bt_remote.h

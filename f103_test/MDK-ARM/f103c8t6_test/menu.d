@@ -34,5 +34,3 @@ f103c8t6_test\menu.o: D:\Keil5\KEIL_MDK\ARM\ARMCC\Bin\..\include\stdlib.h
 f103c8t6_test\menu.o: D:\Keil5\KEIL_MDK\ARM\ARMCC\Bin\..\include\math.h
 f103c8t6_test\menu.o: ../HARDWARE/KEY/key.h
 f103c8t6_test\menu.o: ../HARDWARE/OLED/oled.h
-f103c8t6_test\menu.o: ../HARDWARE/LINE/line.h
-f103c8t6_test\menu.o: ../HARDWARE/JY61P/jy61p.h

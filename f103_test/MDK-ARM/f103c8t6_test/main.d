@@ -41,3 +41,5 @@ f103c8t6_test\main.o: ../HARDWARE/PID/pid.h
 f103c8t6_test\main.o: ../HARDWARE/MENU/menu.h
 f103c8t6_test\main.o: ../HARDWARE/LINE/line.h
 f103c8t6_test\main.o: ../HARDWARE/ENCODER/encoder.h
+f103c8t6_test\main.o: ../HARDWARE/BT_REMOTE/bt_remote.h
+f103c8t6_test\main.o: ../HARDWARE/LINE_TASK/line_task.h

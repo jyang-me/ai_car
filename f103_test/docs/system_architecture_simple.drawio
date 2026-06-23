@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2026-06-23T00:00:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="simple-architecture" name="简化系统架构图">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="title" value="STM32F103 智能小车简化系统架构图" style="text;html=1;strokeColor=none;fillColor=none;fontSize=24;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="330" y="30" width="540" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="input_group" value="输入感知层" style="swimlane;whiteSpace=wrap;html=1;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;fontSize=15;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="50" y="120" width="250" height="500" as="geometry"/>
+        </mxCell>
+        <mxCell id="line_sensor" value="8 路红外循迹传感器&#xa;GPIO 黑线检测" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13" vertex="1" parent="input_group">
+          <mxGeometry x="25" y="70" width="200" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="jy61p" value="JY61P 姿态模块&#xa;USART3 输出 yaw" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13" vertex="1" parent="input_group">
+          <mxGeometry x="25" y="180" width="200" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="bt" value="蓝牙 / 语音遥控模块&#xa;USART1 命令输入" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13" vertex="1" parent="input_group">
+          <mxGeometry x="25" y="285" width="200" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="keys" value="按键输入&#xa;KEY0 / KEY1 / 手动计数键" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13" vertex="1" parent="input_group">
+          <mxGeometry x="25" y="390" width="200" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="input_bus" value="输入数据总线&#xa;GPIO / UART / EXTI" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=13;fontStyle=1;rotation=-90" vertex="1" parent="1">
+          <mxGeometry x="295" y="300" width="360" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="core_group" value="控制核心层" style="swimlane;whiteSpace=wrap;html=1;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;fontSize=15;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="420" y="120" width="340" height="500" as="geometry"/>
+        </mxCell>
+        <mxCell id="mcu" value="STM32F103C8T6 主控&#xa;main.c + HAL 外设驱动" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=15;fontStyle=1" vertex="1" parent="core_group">
+          <mxGeometry x="55" y="65" width="230" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="task_group" value="任务与算法模块&#xa;MENU / LINE_TASK / BT_REMOTE / PID&#xa;负责模式选择、循迹、遥控、yaw 修正和 PWM 计算" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#e8f5e6;strokeColor=#82b366;fontSize=13" vertex="1" parent="core_group">
+          <mxGeometry x="55" y="210" width="230" height="145" as="geometry"/>
+        </mxCell>
+        <mxCell id="output_bus" value="控制输出总线&#xa;PWM / 状态" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=13;fontStyle=1;rotation=-90" vertex="1" parent="1">
+          <mxGeometry x="745" y="300" width="360" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="output_group" value="输出执行层" style="swimlane;whiteSpace=wrap;html=1;rounded=0;fillColor=#f5f5f5;strokeColor=#666666;fontSize=15;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="900" y="120" width="250" height="500" as="geometry"/>
+        </mxCell>
+        <mxCell id="motor_driver" value="电机驱动&#xa;TIM3 PWM + AIN/BIN 方向控制" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#f8cecc;strokeColor=#b85450;fontSize=13;fontStyle=1" vertex="1" parent="output_group">
+          <mxGeometry x="25" y="100" width="200" height="85" as="geometry"/>
+        </mxCell>
+        <mxCell id="motors" value="左 / 右直流电机&#xa;前进、后退、转向、停止" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#f8cecc;strokeColor=#b85450;fontSize=13" vertex="1" parent="output_group">
+          <mxGeometry x="25" y="235" width="200" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="display" value="OLED / LED / 蜂鸣器&#xa;菜单、状态、安全反馈" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=13" vertex="1" parent="output_group">
+          <mxGeometry x="25" y="360" width="200" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="data_note" value="核心数据流：输入感知 → 输入总线 → STM32 主控/任务算法 → 输出总线 → 电机与状态反馈" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="210" y="690" width="780" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1" style="endArrow=block;html=1;rounded=0;strokeWidth=2" edge="1" parent="1" source="line_sensor" target="input_bus"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" style="endArrow=block;html=1;rounded=0;strokeWidth=2" edge="1" parent="1" source="jy61p" target="input_bus"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" style="endArrow=block;html=1;rounded=0;strokeWidth=2" edge="1" parent="1" source="bt" target="input_bus"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" style="endArrow=block;html=1;rounded=0;strokeWidth=2" edge="1" parent="1" source="keys" target="input_bus"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" value="传感器/命令/按键" style="endArrow=block;html=1;rounded=0;strokeWidth=2" edge="1" parent="1" source="input_bus" target="mcu"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e6" value="调度任务" style="endArrow=block;html=1;rounded=0;strokeWidth=2" edge="1" parent="1" source="mcu" target="task_group"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e7" value="PWM/状态" style="endArrow=block;html=1;rounded=0;strokeWidth=2" edge="1" parent="1" source="mcu" target="output_bus"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e8" style="endArrow=block;html=1;rounded=0;strokeWidth=2" edge="1" parent="1" source="output_bus" target="motor_driver"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e9" style="endArrow=block;html=1;rounded=0;strokeWidth=2" edge="1" parent="1" source="output_bus" target="display"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e10" value="PWM + 方向" style="endArrow=block;html=1;rounded=0;strokeWidth=2" edge="1" parent="1" source="motor_driver" target="motors"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>STM32F103 智能小车简化系统架构图</title>
+  <style>
+    body { margin: 0; font-family: "Microsoft YaHei", Arial, sans-serif; background: #f6f7f9; color: #1f2937; }
+    .wrap { width: 1120px; margin: 0 auto; padding: 28px 24px 48px; }
+    h1 { margin: 0 0 20px; text-align: center; font-size: 26px; }
+    svg { width: 100%; height: auto; background: #fff; border: 1px solid #d7dce2; }
+    .lane { fill: #f5f5f5; stroke: #666; stroke-width: 2; }
+    .sensor { fill: #e8f5e6; stroke: #82b366; stroke-width: 2; }
+    .core { fill: #eaf2ff; stroke: #6c8ebf; stroke-width: 2; }
+    .ui { fill: #fff4d6; stroke: #d6b656; stroke-width: 2; }
+    .algo { fill: #fdeceb; stroke: #b85450; stroke-width: 2; }
+    .note { fill: #eee7f5; stroke: #9673a6; stroke-width: 2; }
+    rect { rx: 8; }
+    text { font-size: 14px; text-anchor: middle; dominant-baseline: middle; }
+    .lane-title { font-size: 17px; font-weight: 700; }
+    .small { font-size: 12px; }
+    .arrow { stroke: #374151; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>STM32F103 智能小车简化系统架构图</h1>
+    <svg viewBox="0 0 1120 760" role="img" aria-label="智能小车简化系统架构图">
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L0,6 L9,3 z" fill="#374151"></path>
+        </marker>
+      </defs>
+
+      <rect class="lane" x="40" y="70" width="250" height="500"></rect>
+      <text class="lane-title" x="165" y="100">输入感知层</text>
+      <rect class="sensor" x="65" y="135" width="200" height="82"></rect>
+      <text x="165" y="158">8 路红外循迹传感器</text>
+      <text class="small" x="165" y="181">L4 L3 L2 L1 R1 R2 R3 R4</text>
+      <text class="small" x="165" y="202">GPIO 黑线检测</text>
+      <rect class="sensor" x="65" y="250" width="200" height="75"></rect>
+      <text x="165" y="272">JY61P 姿态模块</text>
+      <text class="small" x="165" y="295">USART3，输出 yaw</text>
+      <rect class="sensor" x="65" y="355" width="200" height="82"></rect>
+      <text x="165" y="378">蓝牙 / 语音遥控模块</text>
+      <text class="small" x="165" y="401">USART1</text>
+      <text class="small" x="165" y="422">F/B/L/R/S/+/- 指令</text>
+      <rect class="ui" x="65" y="470" width="200" height="65"></rect>
+      <text x="165" y="491">按键输入</text>
+      <text class="small" x="165" y="513">KEY0 / KEY1 / 手动计数键</text>
+
+      <rect class="lane" x="370" y="70" width="380" height="500"></rect>
+      <text class="lane-title" x="560" y="100">控制核心层</text>
+      <rect class="core" x="420" y="135" width="280" height="88"></rect>
+      <text x="560" y="158">STM32F103C8T6 主控</text>
+      <text class="small" x="560" y="181">Core/Src/main.c</text>
+      <text class="small" x="560" y="202">HAL + GPIO / TIM / USART / EXTI</text>
+      <rect class="ui" x="420" y="270" width="130" height="82"></rect>
+      <text x="485" y="293">菜单与状态</text>
+      <text class="small" x="485" y="316">MENU</text>
+      <text class="small" x="485" y="337">模式选择</text>
+      <rect class="sensor" x="570" y="270" width="130" height="82"></rect>
+      <text x="635" y="293">循迹任务</text>
+      <text class="small" x="635" y="316">LINE_TASK</text>
+      <text class="small" x="635" y="337">偏差/角点</text>
+      <rect class="sensor" x="420" y="395" width="130" height="82"></rect>
+      <text x="485" y="418">遥控任务</text>
+      <text class="small" x="485" y="441">BT_REMOTE</text>
+      <text class="small" x="485" y="462">命令/速度</text>
+      <rect class="algo" x="570" y="395" width="130" height="82"></rect>
+      <text x="635" y="418">控制算法</text>
+      <text class="small" x="635" y="441">PID</text>
+      <text class="small" x="635" y="462">yaw/PWM 修正</text>
+
+      <rect class="lane" x="830" y="70" width="250" height="500"></rect>
+      <text class="lane-title" x="955" y="100">输出执行层</text>
+      <rect class="algo" x="855" y="150" width="200" height="95"></rect>
+      <text x="955" y="174">电机驱动</text>
+      <text class="small" x="955" y="197">TIM3_CH1/CH2 PWM</text>
+      <text class="small" x="955" y="219">AIN/BIN 方向控制</text>
+      <rect class="algo" x="855" y="290" width="200" height="75"></rect>
+      <text x="955" y="312">左 / 右直流电机</text>
+      <text class="small" x="955" y="336">前进、后退、转向、停止</text>
+      <rect class="ui" x="855" y="410" width="200" height="82"></rect>
+      <text x="955" y="433">OLED / LED / 蜂鸣器</text>
+      <text class="small" x="955" y="456">菜单、状态、完成提示</text>
+      <text class="small" x="955" y="477">安全反馈</text>
+
+      <rect class="note" x="315" y="135" width="50" height="400"></rect>
+      <text x="340" y="300" transform="rotate(-90 340 300)">输入数据总线</text>
+      <text class="small" x="340" y="415" transform="rotate(-90 340 415)">GPIO / UART / EXTI</text>
+
+      <rect class="note" x="775" y="150" width="50" height="342"></rect>
+      <text x="800" y="285" transform="rotate(-90 800 285)">控制输出总线</text>
+      <text class="small" x="800" y="400" transform="rotate(-90 800 400)">PWM / 状态</text>
+
+      <rect class="note" x="210" y="640" width="700" height="60"></rect>
+      <text x="560" y="670">核心数据流：传感器/遥控输入 → STM32 主控 → 任务与 PID 计算 → 左右 PWM → 电机执行</text>
+
+      <path class="arrow" d="M265,176 H315"></path>
+      <path class="arrow" d="M265,288 H315"></path>
+      <path class="arrow" d="M265,396 H315"></path>
+      <path class="arrow" d="M265,502 H315"></path>
+      <path class="arrow" d="M365,320 H420"></path>
+
+      <path class="arrow" d="M560,223 V270"></path>
+      <path class="arrow" d="M560,352 V395"></path>
+      <path class="arrow" d="M570,311 H550"></path>
+      <path class="arrow" d="M570,436 H550"></path>
+
+      <path class="arrow" d="M700,179 H775"></path>
+      <path class="arrow" d="M825,179 H855"></path>
+      <path class="arrow" d="M825,450 H855"></path>
+      <path class="arrow" d="M955,245 V290"></path>
+    </svg>
+  </div>
+</body>
+</html>

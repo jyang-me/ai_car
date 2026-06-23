@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>main() 主函数流程图</title>
+  <style>
+    body { margin: 0; font-family: "Microsoft YaHei", Arial, sans-serif; background: #f6f7f9; color: #1f2937; }
+    .wrap { width: 1200px; margin: 0 auto; padding: 28px 24px 48px; }
+    h1 { margin: 0 0 20px; text-align: center; font-size: 28px; }
+    svg { width: 100%; height: auto; background: #fff; border: 1px solid #d7dce2; }
+    .box { fill: #eaf2ff; stroke: #6c8ebf; stroke-width: 2; rx: 8; }
+    .proc { fill: #e8f5e6; stroke: #82b366; stroke-width: 2; rx: 8; }
+    .io { fill: #fff4d6; stroke: #d6b656; stroke-width: 2; rx: 8; }
+    .warn { fill: #fdeceb; stroke: #b85450; stroke-width: 2; rx: 8; }
+    .diamond { fill: #fff0df; stroke: #d79b00; stroke-width: 2; }
+    text { font-size: 15px; text-anchor: middle; dominant-baseline: middle; }
+    .small { font-size: 13px; }
+    .title { font-size: 24px; font-weight: 700; }
+    .arrow { stroke: #374151; stroke-width: 2; fill: none; marker-end: url(#arrow); }
+    .dash { stroke-dasharray: 7 5; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>main() 主函数流程图</h1>
+    <svg viewBox="0 0 1200 1500" role="img" aria-label="main函数流程图">
+      <defs>
+        <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L0,6 L9,3 z" fill="#374151"></path>
+        </marker>
+      </defs>
+
+      <rect class="box" x="500" y="30" width="200" height="54" rx="27"></rect>
+      <text x="600" y="57">开始 main()</text>
+
+      <rect class="proc" x="430" y="120" width="340" height="88"></rect>
+      <text x="600" y="145">定义运行变量</text>
+      <text class="small" x="600" y="170">yaw / drive_enabled / PWM / line_task / bt_remote</text>
+      <text class="small" x="600" y="192">初始化局部状态</text>
+
+      <rect class="proc" x="430" y="245" width="340" height="112"></rect>
+      <text x="600" y="270">系统与外设初始化</text>
+      <text class="small" x="600" y="296">HAL_Init, SystemClock_Config</text>
+      <text class="small" x="600" y="320">GPIO, TIM1/TIM3, USART1/USART3</text>
+      <text class="small" x="600" y="342">启动 TIM3 双路 PWM</text>
+
+      <rect class="proc" x="430" y="395" width="340" height="120"></rect>
+      <text x="600" y="420">业务模块初始化</text>
+      <text class="small" x="600" y="446">PID 参数与 yaw PID 设置</text>
+      <text class="small" x="600" y="470">line_task_reset, bt_remote_start_rx</text>
+      <text class="small" x="600" y="494">启动 JY61P UART3 接收, OLED 初始化</text>
+
+      <rect class="io" x="465" y="555" width="270" height="72"></rect>
+      <text x="600" y="580">OLED 菜单选择</text>
+      <text class="small" x="600" y="604">g_mode = menu_start_select()</text>
+
+      <rect class="io" x="465" y="665" width="270" height="82"></rect>
+      <text x="600" y="688">若为遥控模式</text>
+      <text class="small" x="600" y="712">bt_remote_reset</text>
+      <text class="small" x="600" y="734">记录 last_mode / PWM 状态</text>
+
+      <rect class="box" x="480" y="785" width="240" height="58"></rect>
+      <text x="600" y="814">while(1) 主循环</text>
+
+      <polygon class="diamond" points="600,895 720,965 600,1035 480,965"></polygon>
+      <text x="600" y="950">是否为遥控模式？</text>
+      <text class="small" x="600" y="976">Phone BT / Voice BT</text>
+
+      <rect class="warn" x="80" y="895" width="335" height="118"></rect>
+      <text x="247" y="918">非遥控：yaw 闭环处理</text>
+      <text class="small" x="247" y="944">JY61P 角度更新则 PID 计算 turn_pwm</text>
+      <text class="small" x="247" y="968">根据 drive_mode 得到 left/right PWM</text>
+      <text class="small" x="247" y="992">无数据或 stale 超限则停车保护</text>
+
+      <rect class="io" x="80" y="1050" width="335" height="84"></rect>
+      <text x="247" y="1074">扫描按键</text>
+      <text class="small" x="247" y="1098">KEY0 / KEY1 / MANUAL_COUNT_KEY</text>
+      <text class="small" x="247" y="1120">去抖并产生事件</text>
+
+      <rect class="io" x="80" y="1170" width="335" height="116"></rect>
+      <text x="247" y="1194">按键事件处理</text>
+      <text class="small" x="247" y="1220">手动计数键：目标角点 +1</text>
+      <text class="small" x="247" y="1244">KEY0：启停 / 停循迹 / 切换直行和角度保持</text>
+      <text class="small" x="247" y="1268">KEY1：安全停车并返回菜单</text>
+
+      <rect class="proc" x="785" y="895" width="335" height="136"></rect>
+      <text x="952" y="920">遥控模式处理</text>
+      <text class="small" x="952" y="946">模式变化时复位状态并停车</text>
+      <text class="small" x="952" y="970">按 drive_enabled 使能/禁用电机</text>
+      <text class="small" x="952" y="994">bt_remote_update 解析命令并输出 PWM</text>
+      <text class="small" x="952" y="1018">刷新 OLED 后 continue</text>
+
+      <polygon class="diamond" points="600,1170 720,1240 600,1310 480,1240"></polygon>
+      <text x="600" y="1225">drive_enabled 且</text>
+      <text class="small" x="600" y="1250">line_task.active ?</text>
+
+      <rect class="proc" x="95" y="1330" width="310" height="100"></rect>
+      <text x="250" y="1354">执行循迹任务</text>
+      <text class="small" x="250" y="1380">line_task_update 读取 line_err</text>
+      <text class="small" x="250" y="1404">角点计数 / 转向找线 / 完成停车蜂鸣</text>
+
+      <rect class="proc" x="795" y="1330" width="310" height="100"></rect>
+      <text x="950" y="1354">普通直行软启动</text>
+      <text class="small" x="950" y="1380">target_drive_pwm = BASE_DRIVE_PWM</text>
+      <text class="small" x="950" y="1404">current_drive_pwm 按 SOFTSTART_STEP 逼近</text>
+
+      <rect class="warn" x="465" y="1350" width="270" height="70"></rect>
+      <text x="600" y="1374">若 drive_enabled == 0</text>
+      <text class="small" x="600" y="1398">禁用左右电机 PWM</text>
+
+      <rect class="io" x="435" y="1445" width="330" height="70"></rect>
+      <text x="600" y="1468">OLED 周期刷新 100 ms</text>
+      <text class="small" x="600" y="1492">显示模式、yaw、line、角点、PWM</text>
+
+      <path class="arrow" d="M600,84 V120"></path>
+      <path class="arrow" d="M600,208 V245"></path>
+      <path class="arrow" d="M600,357 V395"></path>
+      <path class="arrow" d="M600,515 V555"></path>
+      <path class="arrow" d="M600,627 V665"></path>
+      <path class="arrow" d="M600,747 V785"></path>
+      <path class="arrow" d="M600,843 V895"></path>
+      <path class="arrow" d="M480,965 H415"></path>
+      <text class="small" x="445" y="944">否</text>
+      <path class="arrow" d="M247,1013 V1050"></path>
+      <path class="arrow" d="M247,1134 V1170"></path>
+      <path class="arrow" d="M415,1228 H480"></path>
+      <path class="arrow" d="M720,965 H785"></path>
+      <text class="small" x="752" y="944">是</text>
+      <path class="arrow" d="M952,1031 V1460 H765"></path>
+      <path class="arrow" d="M600,1310 V1350"></path>
+      <path class="arrow" d="M480,1240 H405 V1330"></path>
+      <text class="small" x="445" y="1218">是</text>
+      <path class="arrow" d="M720,1240 H950 V1330"></path>
+      <text class="small" x="752" y="1218">否</text>
+      <path class="arrow" d="M405,1380 H465"></path>
+      <path class="arrow" d="M795,1380 H735"></path>
+      <path class="arrow" d="M600,1420 V1445"></path>
+      <path class="arrow" d="M435,1480 H35 V814 H480"></path>
+      <path class="arrow dash" d="M415,1245 H435 V590 H465"></path>
+      <text class="small" x="455" y="645">KEY1 返回菜单</text>
+    </svg>
+  </div>
+</body>
+</html>

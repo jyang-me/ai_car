@@ -1,0 +1,556 @@
+diff --git a/main/CMakeLists.txt b/main/CMakeLists.txt
+index 170cb18..fac71b6 100644
+--- a/main/CMakeLists.txt
++++ b/main/CMakeLists.txt
+@@ -54,9 +54,11 @@ list(APPEND SOURCES
+     "boards/common/backlight.cc"
+     "boards/common/button.cc"
+     "boards/common/i2c_device.cc"
++    "boards/common/jdy34_ble.cpp"
+     "boards/common/knob.cc"
+     "boards/common/power_save_timer.cc"
+     "boards/common/press_to_talk_mcp_tool.cc"
++    "boards/common/car_controller.cpp"
+     "boards/common/sleep_timer.cc"
+     "boards/common/sy6970.cc"
+     "boards/common/system_reset.cc"
+diff --git a/main/boards/bread-compact-wifi-s3cam/compact_wifi_board_s3cam.cc b/main/boards/bread-compact-wifi-s3cam/compact_wifi_board_s3cam.cc
+index 25bc355..41cbe6e 100644
+--- a/main/boards/bread-compact-wifi-s3cam/compact_wifi_board_s3cam.cc
++++ b/main/boards/bread-compact-wifi-s3cam/compact_wifi_board_s3cam.cc
+@@ -9,6 +9,7 @@
+ #include "lamp_controller.h"
+ #include "led/single_led.h"
+ #include "esp32_camera.h"
++#include "car_controller.h"
+ 
+ #include <esp_log.h>
+ #include <driver/i2c_master.h>
+@@ -165,6 +166,12 @@ private:
+         });
+     }
+ 
++    void InitializeTools() {
++        auto& car = CarController::GetInstance();
++        car.Initialize(JDY34_UART_NUM, JDY34_UART_TX_PIN, JDY34_UART_RX_PIN, JDY34_STATE_PIN, JDY34_PEER_MAC);
++        car.RegisterMcpTools();
++    }
++
+ public:
+     CompactWifiBoardS3Cam() :
+         boot_button_(BOOT_BUTTON_GPIO) {
+@@ -172,6 +179,7 @@ public:
+         InitializeLcdDisplay();
+         InitializeButtons();
+         InitializeCamera();
++        InitializeTools();
+         if (DISPLAY_BACKLIGHT_PIN != GPIO_NUM_NC) {
+             GetBacklight()->RestoreBrightness();
+         }
+diff --git a/main/boards/bread-compact-wifi-s3cam/config.h b/main/boards/bread-compact-wifi-s3cam/config.h
+index 857d8c0..7906c65 100644
+--- a/main/boards/bread-compact-wifi-s3cam/config.h
++++ b/main/boards/bread-compact-wifi-s3cam/config.h
+@@ -305,4 +305,11 @@
+ // A MCP Test: Control a lamp
+ #define LAMP_GPIO GPIO_NUM_14
+ 
++// JDY34 BLE transparent UART bridge for STM32 car control.
++#define JDY34_UART_NUM UART_NUM_1
++#define JDY34_UART_TX_PIN GPIO_NUM_14
++#define JDY34_UART_RX_PIN GPIO_NUM_3
++#define JDY34_STATE_PIN GPIO_NUM_NC
++#define JDY34_PEER_MAC "220C180B3AB0"
++
+ #endif // _BOARD_CONFIG_H_
+diff --git a/main/boards/common/car_controller.cpp b/main/boards/common/car_controller.cpp
+new file mode 100644
+index 0000000..4a36e94
+--- /dev/null
++++ b/main/boards/common/car_controller.cpp
+@@ -0,0 +1,184 @@
++#include "car_controller.h"
++
++#include <esp_log.h>
++
++#define TAG "CarController"
++#define CAR_COMMAND_TIMEOUT_MS 10000
++
++const char* MotionName(char motion) {
++    switch (motion) {
++        case 'F':
++            return "forward";
++        case 'B':
++            return "backward";
++        case 'L':
++            return "left";
++        case 'R':
++            return "right";
++        case 'S':
++            return "stop";
++        default:
++            return "unknown";
++    }
++}
++
++CarController& CarController::GetInstance() {
++    static CarController instance;
++    return instance;
++}
++
++bool CarController::Initialize(uart_port_t uart_num,
++                               gpio_num_t tx_pin,
++                               gpio_num_t rx_pin,
++                               gpio_num_t state_pin,
++                               const std::string& peer_mac) {
++    if (initialized_) {
++        return true;
++    }
++
++    ble_ = std::make_unique<Jdy34Ble>(uart_num, tx_pin, rx_pin, state_pin);
++    if (!ble_->Initialize()) {
++        return false;
++    }
++
++    if (!peer_mac.empty()) {
++        ble_->Connect(peer_mac);
++    }
++
++    last_command_tick_ = xTaskGetTickCount();
++    xTaskCreate(&CarController::SafetyTask, "car_safety", 3072, this, 4, nullptr);
++    initialized_ = true;
++    ESP_LOGI(TAG, "Car controller initialized");
++    return true;
++}
++
++void CarController::RegisterMcpTools() {
++    auto& mcp_server = McpServer::GetInstance();
++
++    mcp_server.AddTool("self.car.forward", "Drive the car forward. Speed can be 0-9 or 0-100 percent.",
++        PropertyList({Property("speed", kPropertyTypeInteger, 5, 0, 100)}),
++        [this](const PropertyList& properties) -> ReturnValue {
++            return Forward(properties["speed"].value<int>());
++        });
++
++    mcp_server.AddTool("self.car.backward", "Drive the car backward. Speed can be 0-9 or 0-100 percent.",
++        PropertyList({Property("speed", kPropertyTypeInteger, 5, 0, 100)}),
++        [this](const PropertyList& properties) -> ReturnValue {
++            return Backward(properties["speed"].value<int>());
++        });
++
++    mcp_server.AddTool("self.car.left", "Turn the car left in place. Speed can be 0-9 or 0-100 percent.",
++        PropertyList({Property("speed", kPropertyTypeInteger, 5, 0, 100)}),
++        [this](const PropertyList& properties) -> ReturnValue {
++            return Left(properties["speed"].value<int>());
++        });
++
++    mcp_server.AddTool("self.car.right", "Turn the car right in place. Speed can be 0-9 or 0-100 percent.",
++        PropertyList({Property("speed", kPropertyTypeInteger, 5, 0, 100)}),
++        [this](const PropertyList& properties) -> ReturnValue {
++            return Right(properties["speed"].value<int>());
++        });
++
++    mcp_server.AddTool("self.car.stop", "Stop the car immediately.",
++        PropertyList(),
++        [this](const PropertyList& properties) -> ReturnValue {
++            return Stop();
++        });
++
++    mcp_server.AddTool("self.car.get_status", "Get car controller and JDY34 BLE status.",
++        PropertyList(),
++        [this](const PropertyList& properties) -> ReturnValue {
++            return GetStatusJson();
++        });
++}
++
++bool CarController::Forward(int speed) {
++    return SendMotion('F', speed);
++}
++
++bool CarController::Backward(int speed) {
++    return SendMotion('B', speed);
++}
++
++bool CarController::Left(int speed) {
++    return SendMotion('L', speed);
++}
++
++bool CarController::Right(int speed) {
++    return SendMotion('R', speed);
++}
++
++bool CarController::Stop() {
++    last_motion_ = 'S';
++    moving_ = false;
++    last_command_tick_ = xTaskGetTickCount();
++    ESP_LOGI(TAG, "MCP/voice car command: stop -> S0");
++    bool sent = ble_ && ble_->SendData("S0");
++    if (!sent) {
++        ESP_LOGW(TAG, "Failed to send stop command");
++    }
++    return sent;
++}
++
++std::string CarController::GetStatusJson() const {
++    std::string ble_status = ble_ ? ble_->GetStatusJson() : "{\"initialized\":false,\"connected\":false}";
++    return std::string("{\"initialized\":") + (initialized_ ? "true" : "false") +
++        ",\"moving\":" + (moving_ ? "true" : "false") +
++        ",\"motion\":\"" + std::string(1, last_motion_) + "\"" +
++        ",\"speed\":" + std::to_string(last_speed_) +
++        ",\"ble\":" + ble_status + "}";
++}
++
++bool CarController::SendMotion(char motion, int speed) {
++    int level = NormalizeSpeedLevel(speed);
++    last_motion_ = motion;
++    last_speed_ = level;
++    moving_ = motion != 'S' && level > 0;
++    last_command_tick_ = xTaskGetTickCount();
++
++    std::string command;
++    command.push_back(motion);
++    command.push_back(static_cast<char>('0' + level));
++    ESP_LOGI(TAG, "MCP/voice car command: %s speed=%d level=%d -> %s",
++        MotionName(motion), speed, level, command.c_str());
++    bool sent = ble_ && ble_->SendData(command);
++    if (!sent) {
++        ESP_LOGW(TAG, "Failed to send car command: %s", command.c_str());
++    }
++    return sent;
++}
++
++int CarController::NormalizeSpeedLevel(int speed) const {
++    if (speed < 0) {
++        speed = 0;
++    } else if (speed > 100) {
++        speed = 100;
++    }
++
++    if (speed <= 9) {
++        return speed;
++    }
++
++    int level = (speed + 5) / 10;
++    if (level > 9) {
++        level = 9;
++    }
++    return level;
++}
++
++void CarController::SafetyLoop() {
++    while (true) {
++        if (moving_) {
++            TickType_t elapsed = xTaskGetTickCount() - last_command_tick_;
++            if (elapsed >= pdMS_TO_TICKS(CAR_COMMAND_TIMEOUT_MS)) {
++                ESP_LOGW(TAG, "Command timeout, stop car");
++                Stop();
++            }
++        }
++        vTaskDelay(pdMS_TO_TICKS(200));
++    }
++}
++
++void CarController::SafetyTask(void* arg) {
++    static_cast<CarController*>(arg)->SafetyLoop();
++}
+diff --git a/main/boards/common/car_controller.h b/main/boards/common/car_controller.h
+new file mode 100644
+index 0000000..a48ace1
+--- /dev/null
++++ b/main/boards/common/car_controller.h
+@@ -0,0 +1,47 @@
++#ifndef CAR_CONTROLLER_H
++#define CAR_CONTROLLER_H
++
++#include "jdy34_ble.h"
++#include "mcp_server.h"
++
++#include <freertos/FreeRTOS.h>
++#include <freertos/task.h>
++
++#include <memory>
++#include <string>
++
++class CarController {
++public:
++    static CarController& GetInstance();
++
++    bool Initialize(uart_port_t uart_num,
++                    gpio_num_t tx_pin,
++                    gpio_num_t rx_pin,
++                    gpio_num_t state_pin,
++                    const std::string& peer_mac);
++    void RegisterMcpTools();
++
++    bool Forward(int speed);
++    bool Backward(int speed);
++    bool Left(int speed);
++    bool Right(int speed);
++    bool Stop();
++    std::string GetStatusJson() const;
++
++private:
++    CarController() = default;
++
++    bool SendMotion(char motion, int speed);
++    int NormalizeSpeedLevel(int speed) const;
++    void SafetyLoop();
++    static void SafetyTask(void* arg);
++
++    std::unique_ptr<Jdy34Ble> ble_;
++    bool initialized_ = false;
++    bool moving_ = false;
++    int last_speed_ = 5;
++    char last_motion_ = 'S';
++    TickType_t last_command_tick_ = 0;
++};
++
++#endif
+diff --git a/main/boards/common/jdy34_ble.cpp b/main/boards/common/jdy34_ble.cpp
+new file mode 100644
+index 0000000..a574b17
+--- /dev/null
++++ b/main/boards/common/jdy34_ble.cpp
+@@ -0,0 +1,194 @@
++#include "jdy34_ble.h"
++
++#include <esp_log.h>
++#include <freertos/FreeRTOS.h>
++#include <freertos/task.h>
++
++#include <algorithm>
++#include <cctype>
++#include <cstring>
++
++#define TAG "Jdy34Ble"
++
++Jdy34Ble::Jdy34Ble(uart_port_t uart_num, gpio_num_t tx_pin, gpio_num_t rx_pin, gpio_num_t state_pin)
++    : uart_num_(uart_num), tx_pin_(tx_pin), rx_pin_(rx_pin), state_pin_(state_pin) {
++}
++
++bool Jdy34Ble::Initialize() {
++    if (initialized_) {
++        return true;
++    }
++    if (tx_pin_ == GPIO_NUM_NC || rx_pin_ == GPIO_NUM_NC) {
++        ESP_LOGE(TAG, "UART pins are not configured");
++        return false;
++    }
++
++    ESP_ERROR_CHECK(uart_driver_install(uart_num_, 1024, 1024, 0, nullptr, 0));
++    ESP_ERROR_CHECK(uart_set_pin(uart_num_, tx_pin_, rx_pin_, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
++
++    if (state_pin_ != GPIO_NUM_NC) {
++        gpio_config_t io_conf = {};
++        io_conf.pin_bit_mask = 1ULL << state_pin_;
++        io_conf.mode = GPIO_MODE_INPUT;
++        io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
++        io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
++        gpio_config(&io_conf);
++    }
++
++    uint32_t detected_baud = 0;
++    if (!DetectBaudRate(&detected_baud)) {
++        ESP_LOGE(TAG, "JDY34 did not respond to AT. Check VCC/GND/TX/RX wiring and baud rate.");
++        initialized_ = true;
++        return true;
++    }
++
++    initialized_ = true;
++    if (detected_baud != 9600) {
++        ESP_LOGW(TAG, "JDY34 detected at %lu baud, switching module to 9600", static_cast<unsigned long>(detected_baud));
++        SendCommand("AT+BAUD=4", 500);
++        vTaskDelay(pdMS_TO_TICKS(300));
++        ConfigureUart(9600);
++        SendCommand("AT", 200);
++    } else {
++        SendCommand("AT+BAUD=4", 300);
++    }
++
++    SendCommand("AT+ROLE=1");
++    SendCommand("AT+NAME=ESP32-CAR");
++    return true;
++}
++
++bool Jdy34Ble::ConfigureUart(uint32_t baud_rate) {
++    uart_config_t uart_config = {};
++    uart_config.baud_rate = baud_rate;
++    uart_config.data_bits = UART_DATA_8_BITS;
++    uart_config.parity = UART_PARITY_DISABLE;
++    uart_config.stop_bits = UART_STOP_BITS_1;
++    uart_config.flow_ctrl = UART_HW_FLOWCTRL_DISABLE;
++    uart_config.source_clk = UART_SCLK_DEFAULT;
++
++    esp_err_t err = uart_param_config(uart_num_, &uart_config);
++    if (err != ESP_OK) {
++        ESP_LOGE(TAG, "Failed to configure UART%u at %lu baud: %s",
++            uart_num_, static_cast<unsigned long>(baud_rate), esp_err_to_name(err));
++        return false;
++    }
++    baud_rate_ = baud_rate;
++    uart_flush(uart_num_);
++    return true;
++}
++
++std::string Jdy34Ble::ReadResponse(uint32_t wait_ms) {
++    std::string response;
++    int64_t deadline = esp_timer_get_time() + static_cast<int64_t>(wait_ms) * 1000;
++    uint8_t buffer[128];
++
++    while (esp_timer_get_time() < deadline) {
++        int len = uart_read_bytes(uart_num_, buffer, sizeof(buffer), pdMS_TO_TICKS(20));
++        if (len > 0) {
++            response.append(reinterpret_cast<const char*>(buffer), len);
++        }
++    }
++
++    response.erase(std::remove_if(response.begin(), response.end(),
++        [](unsigned char ch) { return ch != '\r' && ch != '\n' && !std::isprint(ch); }),
++        response.end());
++    return response;
++}
++
++bool Jdy34Ble::DetectBaudRate(uint32_t* baud_rate) {
++    const uint32_t baud_rates[] = {9600, 115200, 38400, 19200, 57600};
++
++    for (auto candidate : baud_rates) {
++        if (!ConfigureUart(candidate)) {
++            continue;
++        }
++
++        std::string response;
++        std::string command = "AT\r\n";
++        uart_write_bytes(uart_num_, command.data(), command.size());
++        uart_wait_tx_done(uart_num_, pdMS_TO_TICKS(80));
++        response = ReadResponse(250);
++        ESP_LOGI(TAG, "Probe baud %lu response: %s", static_cast<unsigned long>(candidate),
++            response.empty() ? "<empty>" : response.c_str());
++
++        if (response.find("OK") != std::string::npos || response.find("AT") != std::string::npos) {
++            *baud_rate = candidate;
++            return true;
++        }
++    }
++
++    return false;
++}
++
++bool Jdy34Ble::SendCommand(const std::string& command, uint32_t wait_ms, std::string* response) {
++    if (!initialized_) {
++        return false;
++    }
++
++    uart_flush(uart_num_);
++    std::string line = command + "\r\n";
++    int written = uart_write_bytes(uart_num_, line.data(), line.size());
++    uart_wait_tx_done(uart_num_, pdMS_TO_TICKS(80));
++    std::string local_response = ReadResponse(wait_ms);
++    if (response != nullptr) {
++        *response = local_response;
++    }
++    ESP_LOGI(TAG, "AT command: %s, response: %s", command.c_str(),
++        local_response.empty() ? "<empty>" : local_response.c_str());
++    return written == static_cast<int>(line.size());
++}
++
++bool Jdy34Ble::Connect(const std::string& mac) {
++    if (mac.empty()) {
++        ESP_LOGW(TAG, "JDY-31 MAC is empty, skip auto connect");
++        return false;
++    }
++
++    std::string normalized_mac;
++    normalized_mac.reserve(mac.size());
++    for (unsigned char ch : mac) {
++        if (std::isxdigit(ch)) {
++            normalized_mac.push_back(static_cast<char>(std::toupper(ch)));
++        }
++    }
++
++    if (normalized_mac.size() != 12) {
++        ESP_LOGE(TAG, "Invalid JDY slave MAC: %s", mac.c_str());
++        return false;
++    }
++
++    std::string response;
++    SendCommand("AT+BAND" + normalized_mac, 1200, &response);
++    connected_ = response.find("OK") != std::string::npos ||
++        response.find("BAND") != std::string::npos ||
++        response.find("Connected") != std::string::npos;
++    if (!connected_) {
++        ESP_LOGW(TAG, "JDY34 bind command did not confirm connection");
++    }
++    return connected_;
++}
++
++bool Jdy34Ble::SendData(const std::string& data) {
++    if (!initialized_) {
++        return false;
++    }
++
++    int written = uart_write_bytes(uart_num_, data.data(), data.size());
++    uart_wait_tx_done(uart_num_, pdMS_TO_TICKS(80));
++    ESP_LOGI(TAG, "TX: %s", data.c_str());
++    return written == static_cast<int>(data.size());
++}
++
++bool Jdy34Ble::IsConnected() const {
++    if (state_pin_ != GPIO_NUM_NC) {
++        return gpio_get_level(state_pin_) == 1;
++    }
++    return connected_;
++}
++
++std::string Jdy34Ble::GetStatusJson() const {
++    return std::string("{\"initialized\":") + (initialized_ ? "true" : "false") +
++        ",\"connected\":" + (IsConnected() ? "true" : "false") +
++        ",\"baud\":" + std::to_string(baud_rate_) + "}";
++}
+diff --git a/main/boards/common/jdy34_ble.h b/main/boards/common/jdy34_ble.h
+new file mode 100644
+index 0000000..5cbe3b9
+--- /dev/null
++++ b/main/boards/common/jdy34_ble.h
+@@ -0,0 +1,34 @@
++#ifndef JDY34_BLE_H
++#define JDY34_BLE_H
++
++#include <driver/gpio.h>
++#include <driver/uart.h>
++
++#include <string>
++
++class Jdy34Ble {
++public:
++    Jdy34Ble(uart_port_t uart_num, gpio_num_t tx_pin, gpio_num_t rx_pin, gpio_num_t state_pin = GPIO_NUM_NC);
++
++    bool Initialize();
++    bool SendData(const std::string& data);
++    bool SendCommand(const std::string& command, uint32_t wait_ms = 120, std::string* response = nullptr);
++    bool Connect(const std::string& mac);
++    bool IsConnected() const;
++    std::string GetStatusJson() const;
++
++private:
++    bool ConfigureUart(uint32_t baud_rate);
++    std::string ReadResponse(uint32_t wait_ms);
++    bool DetectBaudRate(uint32_t* baud_rate);
++
++    uart_port_t uart_num_;
++    gpio_num_t tx_pin_;
++    gpio_num_t rx_pin_;
++    gpio_num_t state_pin_;
++    uint32_t baud_rate_ = 9600;
++    bool initialized_ = false;
++    bool connected_ = false;
++};
++
++#endif
+diff --git a/sdkconfig.defaults.ai_car b/sdkconfig.defaults.ai_car
+new file mode 100644
+index 0000000..dcb24ab
+--- /dev/null
++++ b/sdkconfig.defaults.ai_car
+@@ -0,0 +1,2 @@
++CONFIG_BOARD_TYPE_BREAD_COMPACT_WIFI_CAM=y
++CONFIG_LCD_ST7789_240X320=y

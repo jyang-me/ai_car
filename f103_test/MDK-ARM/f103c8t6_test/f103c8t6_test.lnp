@@ -35,6 +35,8 @@
 "f103c8t6_test\key.o"
 "f103c8t6_test\menu.o"
 "f103c8t6_test\line.o"
+"f103c8t6_test\bt_remote.o"
+"f103c8t6_test\line_task.o"
 --library_type=microlib --strict --scatter "f103c8t6_test\f103c8t6_test.sct"
 --summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers

@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F103xB</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;../HARDWARE;../HARDWARE/OLED;../HARDWARE/MyConfig;../HARDWARE/MOTOR;../HARDWARE/ENCODER;../HARDWARE/PID;../HARDWARE/CONTROL;../HARDWARE/PROTOCOL;../HARDWARE/MPU6050;../HARDWARE/MPU6050/eMPL;../HARDWARE/JY61P;../HARDWARE/KEY;../HARDWARE/MENU;../HARDWARE/LINE</IncludePath>
+              <IncludePath>../Core/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc;../Drivers/STM32F1xx_HAL_Driver/Inc/Legacy;../Drivers/CMSIS/Device/ST/STM32F1xx/Include;../Drivers/CMSIS/Include;../HARDWARE;../HARDWARE/OLED;../HARDWARE/MyConfig;../HARDWARE/MOTOR;../HARDWARE/ENCODER;../HARDWARE/PID;../HARDWARE/CONTROL;../HARDWARE/PROTOCOL;../HARDWARE/MPU6050;../HARDWARE/MPU6050/eMPL;../HARDWARE/JY61P;../HARDWARE/KEY;../HARDWARE/MENU;../HARDWARE/LINE;../HARDWARE/BT_REMOTE;../HARDWARE/LINE_TASK</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -739,6 +739,16 @@
               <FileName>line.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\HARDWARE\LINE\line.c</FilePath>
+            </File>
+            <File>
+              <FileName>bt_remote.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\BT_REMOTE\bt_remote.c</FilePath>
+            </File>
+            <File>
+              <FileName>line_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\HARDWARE\LINE_TASK\line_task.c</FilePath>
             </File>
           </Files>
         </Group>

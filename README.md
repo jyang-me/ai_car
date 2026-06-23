@@ -19,9 +19,10 @@
 | 目录 | 说明 |
 | --- | --- |
 | `xiaozhi-esp32/` | ESP32-S3 小智固件，负责语音识别后的 MCP 工具调用和 JDY34 发送 |
+| `esp32_ai_car/` | ESP32 端 AI 小车相关改造源码归档，可直接复制回 `xiaozhi-esp32` |
 | `f103_test/` | STM32F103 小车固件，负责蓝牙串口接收、OLED 状态显示和电机控制 |
 
-注意：`xiaozhi-esp32/` 本地目录是独立的上游 Git 仓库，父仓库不会直接保存其源码内容。当前 AI 小车相关 ESP32 改动已导出到 `docs/esp32-xiaozhi-ai-car.patch`，可在一份干净的 `xiaozhi-esp32` 仓库中用 `git apply` 恢复。
+注意：`xiaozhi-esp32/` 本地目录是独立的上游 Git 仓库，父仓库不会直接提交整个上游工程。当前 AI 小车相关 ESP32 改动已归档到 `esp32_ai_car/`，并额外导出补丁 `docs/esp32-xiaozhi-ai-car.patch`。
 
 ## 当前验证状态
 
@@ -123,7 +124,13 @@ STM32 支持文本 ASCII 指令。推荐语音链路发送两字节格式：
 | `xiaozhi-esp32/main/boards/common/jdy34_ble.h` | JDY34 驱动接口 |
 | `xiaozhi-esp32/main/boards/bread-compact-wifi-s3cam/config.h` | JDY34 UART 引脚和 JDY31 MAC 配置 |
 
-父仓库同步 GitHub 时，ESP32 子仓库改动备份在：
+父仓库同步 GitHub 时，ESP32 相关源码归档在：
+
+```text
+esp32_ai_car/
+```
+
+同一批改动的补丁备份在：
 
 ```text
 docs/esp32-xiaozhi-ai-car.patch

@@ -38,15 +38,22 @@ E:\Prj\ai_car
 | 工程 | 路径 | 作用 |
 | --- | --- | --- |
 | ESP32 固件 | `xiaozhi-esp32/` | 语音接入、MCP 工具注册、JDY34 透传发送 |
+| ESP32 改造归档 | `esp32_ai_car/` | 父仓库中直接可见的 ESP32 小车控制相关源码 |
 | STM32 固件 | `f103_test/` | 蓝牙串口接收、OLED 状态显示、电机控制 |
 
-说明：`xiaozhi-esp32/` 是独立上游 Git 仓库，父仓库不直接提交其源码目录。当前 AI 小车相关 ESP32 改动已导出到：
+说明：`xiaozhi-esp32/` 是独立上游 Git 仓库，父仓库不直接提交整个上游源码目录。当前 AI 小车相关 ESP32 改动已归档到：
+
+```text
+esp32_ai_car/
+```
+
+同一批改动也已导出到：
 
 ```text
 docs/esp32-xiaozhi-ai-car.patch
 ```
 
-在干净的 `xiaozhi-esp32` 仓库中可用 `git apply` 恢复这些改动。
+可以直接复制 `esp32_ai_car/` 下的同名路径文件到 `xiaozhi-esp32`，也可以在干净的 `xiaozhi-esp32` 仓库中用 `git apply` 恢复这些改动。
 
 ## 3. 当前实测结论
 
@@ -160,7 +167,13 @@ STM32 当前解析文本 ASCII 指令。推荐 ESP32 语音链路发送两字节
 | `xiaozhi-esp32/main/boards/common/jdy34_ble.h` | JDY34 驱动接口 |
 | `xiaozhi-esp32/main/boards/bread-compact-wifi-s3cam/config.h` | JDY34 UART 引脚和 JDY31 MAC |
 
-父仓库中的 ESP32 改动归档：
+父仓库中的 ESP32 改动源码归档：
+
+```text
+esp32_ai_car/
+```
+
+补丁归档：
 
 ```text
 docs/esp32-xiaozhi-ai-car.patch

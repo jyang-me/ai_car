@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mxfile host="app.diagrams.net" modified="2026-06-24T00:00:00.000Z" agent="Codex" version="24.7.17">
+  <diagram id="ble-link-flow" name="JDY34 JDY31 BLE Link Flow">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="760" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" value="模块 2：JDY34 / JDY31 蓝牙透传流程" style="text;html=1;strokeColor=none;fillColor=none;fontSize=24;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="300" y="40" width="520" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="n1" value="ESP32 UART1 初始化&lt;br&gt;TX GPIO14 / RX GPIO3&lt;br&gt;9600 8N1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14" vertex="1" parent="1">
+          <mxGeometry x="80" y="150" width="230" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="n2" value="探测 JDY34 波特率&lt;br&gt;发送 AT 并读取 OK" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14" vertex="1" parent="1">
+          <mxGeometry x="390" y="150" width="220" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="n3" value="配置 JDY34&lt;br&gt;AT+BAUD=4&lt;br&gt;AT+ROLE=1&lt;br&gt;AT+NAME=ESP32-CAR" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14" vertex="1" parent="1">
+          <mxGeometry x="700" y="130" width="230" height="125" as="geometry" />
+        </mxCell>
+        <mxCell id="n4" value="绑定 JDY31&lt;br&gt;AT+BAND220C180B3AB0" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="390" y="320" width="240" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="n5" value="BLE 连接成功&lt;br&gt;JDY34 主机 - JDY31 从机" style="shape=hexagon;perimeter=hexagonPerimeter2;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="390" y="475" width="240" height="95" as="geometry" />
+        </mxCell>
+        <mxCell id="n6" value="ESP32 发送 F5 / S0&lt;br&gt;JDY34 BLE 透传" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14" vertex="1" parent="1">
+          <mxGeometry x="80" y="620" width="220" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="n7" value="JDY31 串口输出&lt;br&gt;TXD 输出原始 ASCII&lt;br&gt;F5 / S0" style="rounded=1;whiteSpace=wrap;html=1;arcSize=8;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="700" y="620" width="230" height="85" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" style="endArrow=block;html=1;strokeWidth=2;rounded=0" edge="1" parent="1" source="n1" target="n2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" style="endArrow=block;html=1;strokeWidth=2;rounded=0" edge="1" parent="1" source="n2" target="n3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" style="endArrow=block;html=1;strokeWidth=2;rounded=0" edge="1" parent="1" source="n3" target="n4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4" value="OK / BAND / Connected" style="endArrow=block;html=1;strokeWidth=2;rounded=0" edge="1" parent="1" source="n4" target="n5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5" style="endArrow=block;html=1;strokeWidth=2;rounded=0" edge="1" parent="1" source="n6" target="n5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6" value="透明转发" style="endArrow=block;html=1;strokeWidth=2;rounded=0" edge="1" parent="1" source="n5" target="n7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

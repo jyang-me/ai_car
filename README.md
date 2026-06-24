@@ -24,6 +24,13 @@
 
 注意：`xiaozhi-esp32/` 本地目录是独立的上游 Git 仓库，父仓库不会直接提交整个上游工程。当前 AI 小车相关 ESP32 改动已归档到 `esp32_ai_car/`，并额外导出补丁 `docs/esp32-xiaozhi-ai-car.patch`。
 
+系统架构图：
+
+| 文件 | 说明 |
+| --- | --- |
+| `docs/system_architecture_ai_car.drawio` | 可编辑 draw.io 系统架构图 |
+| `docs/system_architecture_ai_car_preview.html` | 浏览器快速预览页 |
+
 ## 当前验证状态
 
 - ESP32 端可以通过 MCP/语音工具生成小车指令。

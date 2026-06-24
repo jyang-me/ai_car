@@ -55,6 +55,13 @@ docs/esp32-xiaozhi-ai-car.patch
 
 可以直接复制 `esp32_ai_car/` 下的同名路径文件到 `xiaozhi-esp32`，也可以在干净的 `xiaozhi-esp32` 仓库中用 `git apply` 恢复这些改动。
 
+系统架构图文件：
+
+| 文件 | 说明 |
+| --- | --- |
+| `docs/system_architecture_ai_car.drawio` | 可编辑 draw.io 系统架构图 |
+| `docs/system_architecture_ai_car_preview.html` | 浏览器快速预览页 |
+
 ## 3. 当前实测结论
 
 截至当前调试，已经确认：

@@ -30,6 +30,8 @@
 | --- | --- |
 | `docs/system_architecture_ai_car.drawio` | 可编辑 draw.io 系统架构图 |
 | `docs/system_architecture_ai_car_preview.html` | 浏览器快速预览页 |
+| `docs/module_flow_diagrams_ai_car.drawio` | 分模块流程图，包含 ESP32、蓝牙透传、STM32、调试验证 4 页 |
+| `docs/module_flow_diagrams_ai_car_preview.html` | 分模块流程图浏览器预览页 |
 
 ## 当前验证状态
 

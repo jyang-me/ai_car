@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>STM32 智能小车功能架构图</title>
+  <style>
+    body { margin: 0; font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif; background: #f7f9fb; color: #1f2933; }
+    main { max-width: 1180px; margin: 0 auto; padding: 32px 24px 48px; }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    p { margin: 0 0 22px; line-height: 1.7; color: #52606d; }
+    .top { background: #fff4d6; border: 1px solid #d6b656; border-radius: 8px; padding: 16px; margin-bottom: 18px; }
+    .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+    .card { background: #fff; border: 1px solid #d9e2ec; border-radius: 8px; padding: 18px; }
+    .card h2 { margin: 0 0 12px; font-size: 20px; }
+    .node { border: 1px solid #9fb3c8; border-radius: 8px; padding: 11px 12px; margin: 10px 0; background: #f0f4f8; line-height: 1.55; }
+    .line { background: #e3f8e6; border-color: #8bc48a; }
+    .bt { background: #e8f1ff; border-color: #6c8ebf; }
+    .shared { background: #efe7f7; border-color: #a88ac2; }
+    .safe { background: #ffe3e3; border-color: #d66a6a; }
+    .shared-row { margin-top: 18px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+    code { background: #eef2f7; border-radius: 4px; padding: 1px 5px; }
+    @media (max-width: 860px) { .grid, .shared-row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>STM32 智能小车功能架构图：循迹 + 蓝牙遥控</h1>
+    <p>可编辑源文件：<code>docs/functional_architecture_ai_car.drawio</code>。这张图按小车功能而不是通信链路组织，用来说明系统边界。</p>
+
+    <section class="top">
+      小车主要分为两条业务线：<b>循迹模式</b> 和 <b>蓝牙遥控模式</b>。两者共用菜单、按键、安全停车、OLED、电机驱动和底盘执行层。
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>主功能 A：循迹模式</h2>
+        <div class="node line">输入感知：8 路红外循迹传感器，输出黑线状态和 <code>line_err</code>。</div>
+        <div class="node line">姿态辅助：JY61P 通过 USART3 输出 yaw 角度。</div>
+        <div class="node">LINE_TASK 状态机：处理顺/逆时针循迹、指定角点计数、丢线、转向和完成判断。</div>
+        <div class="node shared">输出：根据循迹误差和姿态修正得到左右电机 PWM。</div>
+      </article>
+
+      <article class="card">
+        <h2>主功能 B：蓝牙遥控模式</h2>
+        <div class="node bt">手机蓝牙串口：Phone BT，文本发送 <code>F</code>、<code>F5</code>、<code>S0</code>。</div>
+        <div class="node bt">语音蓝牙链路：ESP32 -> JDY34 -> JDY31，发送 <code>F5/B5/L5/R5/S0</code>。</div>
+        <div class="node">USART1 接收：JDY31 TXD -> STM32 PA10，9600 8N1。</div>
+        <div class="node shared">BT_REMOTE：解析 F/B/L/R/S 和速度档位，维护 Cmd、Raw、left_pwm、right_pwm，并做超时停车。</div>
+      </article>
+    </section>
+
+    <section class="shared-row">
+      <div class="node">菜单模式<br>Line Mode / BT Mode</div>
+      <div class="node safe">安全与启停<br>KEY0 使能，KEY1 返回，超时停车</div>
+      <div class="node shared">统一运动输出<br>left_pwm / right_pwm</div>
+      <div class="node safe">底盘执行<br>TIM3 PWM + 方向 GPIO + 左右电机</div>
+    </section>
+  </main>
+</body>
+</html>
